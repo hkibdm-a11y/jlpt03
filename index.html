@@ -1,0 +1,1005 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>JLPT N1 反向 10 秒口試考官 ⚡ N1 Reflex Sensei</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=M+PLUS+Rounded+1c:wght@400;700;800;900&family=Zen+Maru+Gothic:wght@500;700;900&family=Inter:wght@400;600;800&display=swap" rel="stylesheet">
+
+    <style>
+        body {
+            font-family: 'Zen Maru Gothic', 'M PLUS Rounded 1c', 'Inter', sans-serif;
+            background-color: #FFF7ED;
+            background-image: radial-gradient(#FDBA74 0.75px, transparent 0.75px), radial-gradient(#FED7AA 0.75px, #FFF7ED 0.75px);
+            background-size: 30px 30px;
+            background-position: 0 0, 15px 15px;
+        }
+
+        /* Neo-brutalist kawaii card styling */
+        .card-kawaii {
+            background: #FFFFFF;
+            border: 3.5px solid #292524;
+            box-shadow: 6px 6px 0px #292524;
+            border-radius: 24px;
+            transition: all 0.15s ease-in-out;
+        }
+
+        .btn-kawaii {
+            border: 3px solid #292524;
+            box-shadow: 4px 4px 0px #292524;
+            border-radius: 16px;
+            font-weight: 800;
+            transition: all 0.1s ease;
+            user-select: none;
+        }
+        .btn-kawaii:hover:not(:disabled) {
+            transform: translate(-2px, -2px);
+            box-shadow: 6px 6px 0px #292524;
+        }
+        .btn-kawaii:active:not(:disabled) {
+            transform: translate(2px, 2px);
+            box-shadow: 1px 1px 0px #292524;
+        }
+        .btn-kawaii:disabled {
+            opacity: 0.55;
+            cursor: not-allowed;
+            box-shadow: 2px 2px 0px #292524;
+            transform: none;
+        }
+
+        /* Mascot animations */
+        @keyframes floatUpDown {
+            0%, 100% { transform: translateY(0px) rotate(0deg); }
+            50% { transform: translateY(-7px) rotate(1.5deg); }
+        }
+        .mascot-bounce {
+            animation: floatUpDown 2.8s ease-in-out infinite;
+        }
+
+        @keyframes pulseTicking {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.08); }
+        }
+        .timer-urgent {
+            animation: pulseTicking 0.5s ease-in-out infinite;
+            color: #EF4444 !important;
+        }
+
+        /* Mic wave animation */
+        @keyframes micPulse {
+            0% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.6); }
+            70% { box-shadow: 0 0 0 16px rgba(239, 68, 68, 0); }
+            100% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0); }
+        }
+        .mic-active {
+            animation: micPulse 1.2s infinite;
+            background-color: #F87171 !important;
+            color: white !important;
+        }
+
+        /* Custom scrollbar */
+        ::-webkit-scrollbar { width: 8px; }
+        ::-webkit-scrollbar-track { background: #FFEDD5; border-radius: 8px; }
+        ::-webkit-scrollbar-thumb { background: #FB923C; border-radius: 8px; border: 2px solid #292524; }
+    </style>
+</head>
+<body class="min-h-screen text-stone-800 flex flex-col justify-between p-3 sm:p-6 select-none">
+
+    <header class="max-w-3xl w-full mx-auto mb-4 flex items-center justify-between gap-3 flex-wrap">
+        <div class="flex items-center gap-2.5">
+            <div class="w-12 h-12 bg-amber-400 border-3 border-stone-800 rounded-2xl flex items-center justify-center text-2xl shadow-[3px_3px_0px_#292524]">
+                🐕‍🦺
+            </div>
+            <div>
+                <h1 class="text-xl sm:text-2xl font-black tracking-tight text-stone-900 flex items-center gap-1.5">
+                    柴犬考官 ⚡ 10秒反向口試
+                </h1>
+                <p class="text-xs font-bold text-amber-900/70">JLPT N1 弱點陷阱詞彙・每輪隨機 8 題挑戰</p>
+            </div>
+        </div>
+
+        <div class="flex items-center gap-2">
+            <button id="btnRestartRound" class="btn-kawaii bg-amber-200 hover:bg-amber-300 text-stone-800 px-3 py-2 text-xs sm:text-sm flex items-center gap-1.5" title="重新抽取隨機 8 題">
+                <span>🔄 新一輪 (8題)</span>
+            </button>
+            <button id="btnNotebookToggle" class="btn-kawaii bg-amber-100 hover:bg-amber-200 text-stone-800 px-3 py-2 text-xs sm:text-sm flex items-center gap-1.5">
+                <span>📕 弱點本</span>
+                <span id="badgeWeaknessCount" class="bg-rose-500 text-white font-extrabold px-1.5 py-0.5 rounded-full text-xs">0</span>
+            </button>
+            <button id="btnSettings" class="btn-kawaii bg-white hover:bg-stone-50 text-stone-800 px-3 py-2 text-xs sm:text-sm flex items-center gap-1">
+                <span>⚙️ 設定</span>
+            </button>
+        </div>
+    </header>
+
+    <main class="max-w-3xl w-full mx-auto flex-1 flex flex-col gap-4">
+        
+        <!-- Top Stats Tracker -->
+        <div class="card-kawaii p-3.5 sm:p-4 bg-amber-50/80 flex items-center justify-between gap-2 text-xs sm:text-sm font-bold flex-wrap">
+            <div class="flex items-center gap-2">
+                <span class="text-stone-500">進度：</span>
+                <span id="statProgress" class="text-stone-900 font-black text-base">1 / 8</span>
+            </div>
+            <div class="flex items-center gap-3">
+                <div class="flex items-center gap-1">
+                    <span class="text-emerald-600 font-extrabold">⭕ 答對:</span>
+                    <span id="statCorrect" class="text-emerald-700 font-black text-base">0</span>
+                </div>
+                <div class="flex items-center gap-1">
+                    <span class="text-rose-500 font-extrabold">❌ 答錯:</span>
+                    <span id="statWrong" class="text-rose-600 font-black text-base">0</span>
+                </div>
+                <div class="flex items-center gap-1 bg-amber-200/80 px-2.5 py-1 rounded-xl border-2 border-stone-800 shadow-[2px_2px_0px_#292524]">
+                    <span>🔥 連擊:</span>
+                    <span id="statStreak" class="text-amber-800 font-black text-base">0</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Main Question & Avatar Card -->
+        <div id="gamePlayCard" class="card-kawaii p-5 sm:p-8 flex flex-col items-center justify-center relative overflow-hidden">
+            
+            <!-- Category Tag & Timer Pill -->
+            <div class="w-full flex items-center justify-between mb-4">
+                <span id="badgeCategory" class="px-3 py-1 bg-stone-100 border-2 border-stone-800 rounded-full text-xs font-black text-stone-700 shadow-[2px_2px_0px_#292524]">
+                    訓讀動詞辨析
+                </span>
+                
+                <div class="flex items-center gap-2">
+                    <span class="text-xs font-extrabold text-stone-500">倒數</span>
+                    <div id="timerContainer" class="flex items-center gap-1.5 px-3 py-1 bg-amber-100 border-2 border-stone-800 rounded-full font-black text-stone-900 shadow-[2px_2px_0px_#292524]">
+                        <span id="timerIcon">⏱️</span>
+                        <span id="timerDisplay" class="text-base font-black w-10 text-center">10.0</span>s
+                    </div>
+                </div>
+            </div>
+
+            <!-- Animated Mascot Sensei -->
+            <div class="relative mb-3">
+                <div id="mascotAvatar" class="w-24 h-24 sm:w-28 sm:h-28 rounded-full bg-amber-300 border-3 border-stone-800 shadow-[4px_4px_0px_#292524] flex items-center justify-center text-5xl sm:text-6xl mascot-bounce select-none">
+                    🧐
+                </div>
+                <div id="senseiBubble" class="absolute -top-3 -right-20 bg-white border-2 border-stone-800 rounded-2xl px-3 py-1 text-xs font-extrabold shadow-[2px_2px_0px_#292524] whitespace-nowrap hidden sm:block">
+                    速答！讀音與意思！
+                </div>
+            </div>
+
+            <!-- Target Japanese Word (Primary prompt) -->
+            <div class="flex items-center justify-center gap-3 my-2 text-center w-full">
+                <h2 id="targetKanji" class="text-4xl sm:text-6xl font-black tracking-wider text-stone-900">
+                    唆す
+                </h2>
+                <button id="btnSpeakWord" title="點擊念出單字" class="btn-kawaii bg-amber-200 hover:bg-amber-300 p-2.5 rounded-2xl text-xl">
+                    🔊
+                </button>
+            </div>
+
+            <!-- Hints / Tags -->
+            <div id="hintBox" class="mt-1 mb-5 text-xs sm:text-sm font-bold text-stone-500 text-center">
+                提示：說出或輸入【假名讀音】與【中文語意】（例：そそのかす 教唆）
+            </div>
+
+            <!-- Countdown Progress Bar -->
+            <div class="w-full bg-stone-200 h-3 rounded-full border-2 border-stone-800 overflow-hidden mb-6 shadow-[2px_2px_0px_#292524]">
+                <div id="timeProgressBar" class="h-full bg-emerald-400 transition-all duration-75 w-full"></div>
+            </div>
+
+            <!-- Voice / Input Area -->
+            <div class="w-full flex flex-col gap-3">
+                
+                <!-- Voice Status Badge -->
+                <div id="voiceStatus" class="text-center text-xs font-bold text-stone-500 min-h-[1.25rem] flex items-center justify-center gap-1">
+                    <span>點擊下方麥克風說話，或直接鍵盤輸入按 Enter</span>
+                </div>
+
+                <!-- Input Controls -->
+                <div class="flex items-center gap-2 w-full">
+                    <button id="btnMic" class="btn-kawaii bg-rose-100 hover:bg-rose-200 text-rose-700 px-4 py-3 rounded-2xl flex items-center justify-center text-xl flex-shrink-0" title="語音作答 (請允許麥克風權限)">
+                        🎤
+                    </button>
+                    <div class="relative flex-1">
+                        <input id="inputAnswer" type="text" autocomplete="off" autocorrect="off" spellcheck="false" placeholder="快速輸入讀音或語意，按 Enter 送出..." class="w-full bg-stone-50 border-3 border-stone-800 rounded-2xl px-4 py-3 text-stone-900 font-bold placeholder-stone-400 focus:bg-white focus:outline-none focus:ring-2 focus:ring-amber-400 text-sm sm:text-base shadow-[3px_3px_0px_#292524]">
+                        <button id="btnSubmitAnswer" class="absolute right-2 top-2 btn-kawaii bg-amber-400 hover:bg-amber-500 text-stone-900 px-3 py-1.5 text-xs font-black rounded-xl">
+                            送出 ↵
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Manual Reflex Override (Self-Judge) -->
+                <div class="flex items-center justify-between gap-3 pt-3 mt-1 border-t-2 border-dashed border-stone-300">
+                    <span class="text-xs font-black text-stone-500">考官裁決 / 口說自評：</span>
+                    <div class="flex items-center gap-2">
+                        <button id="btnManualPass" class="btn-kawaii bg-emerald-100 hover:bg-emerald-200 text-emerald-800 px-3.5 py-1.5 text-xs sm:text-sm font-black flex items-center gap-1">
+                            <span>⭕ 我在10秒內想到了</span>
+                        </button>
+                        <button id="btnManualFail" class="btn-kawaii bg-rose-100 hover:bg-rose-200 text-rose-800 px-3.5 py-1.5 text-xs sm:text-sm font-black flex items-center gap-1">
+                            <span>❌ 沒想起來/超時</span>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div id="explanationCard" class="card-kawaii p-5 sm:p-7 bg-amber-50 border-amber-800 hidden flex flex-col gap-4">
+            <div class="flex items-start justify-between gap-2 border-b-2 border-stone-800 pb-3">
+                <div class="flex items-center gap-2.5">
+                    <span id="feedbackResultIcon" class="text-3xl sm:text-4xl">⭕</span>
+                    <div>
+                        <div id="feedbackTitle" class="text-base sm:text-lg font-black text-stone-900">判定合格！反射神速！</div>
+                        <div id="feedbackWordTitle" class="text-sm font-extrabold text-amber-900">唆す（そそのかす）</div>
+                    </div>
+                </div>
+                <button id="btnNextQuestion" class="btn-kawaii bg-amber-400 hover:bg-amber-500 text-stone-900 px-4 py-2 text-sm font-black rounded-xl shadow-[3px_3px_0px_#292524] flex items-center gap-1">
+                    <span>下一題</span>
+                    <span class="text-xs">（Space 空白鍵）</span>
+                </button>
+            </div>
+
+            <!-- Core Explanations -->
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs sm:text-sm">
+                <div class="bg-white p-3 rounded-2xl border-2 border-stone-800 shadow-[2px_2px_0px_#292524]">
+                    <div class="text-xs font-black text-amber-700 mb-1">📖 正確讀音與核心含義</div>
+                    <div id="explMeaning" class="font-extrabold text-stone-800 text-sm mb-1">そそのかす｜指教唆、挑唆他人做壞事</div>
+                    <div id="explRomaji" class="text-xs text-stone-400 font-mono">sosonokasu</div>
+                </div>
+                <div class="bg-white p-3 rounded-2xl border-2 border-stone-800 shadow-[2px_2px_0px_#292524]">
+                    <div class="text-xs font-black text-rose-600 mb-1">⚠️ 常見高頻混淆陷阱</div>
+                    <div id="explTraps" class="font-bold text-stone-700 text-xs leading-relaxed">
+                        促す (うながす: 催促)；脅かす (おびやかす: 威脅)
+                    </div>
+                </div>
+            </div>
+
+            <!-- Example sentence and voice playback -->
+            <div class="bg-white p-3.5 rounded-2xl border-2 border-stone-800 shadow-[2px_2px_0px_#292524] flex items-center justify-between gap-3">
+                <div class="flex-1">
+                    <div class="text-xs font-bold text-stone-400 mb-0.5">實戰考題句型 / 固定搭配</div>
+                    <p id="explSentence" class="text-xs sm:text-sm font-bold text-stone-800">
+                        悪友に唆されて犯行に及んだ。
+                    </p>
+                    <p id="explSentenceZh" class="text-xs font-semibold text-stone-500 mt-0.5">
+                        受到壞朋友的教唆才犯下罪行。
+                    </p>
+                </div>
+                <button id="btnPlaySentence" class="btn-kawaii bg-amber-200 hover:bg-amber-300 p-2.5 rounded-xl text-lg flex-shrink-0" title="朗讀例句">
+                    🔊
+                </button>
+            </div>
+        </div>
+
+    </main>
+
+    <!-- Weakness Notebook Drawer Modal -->
+    <div id="modalNotebook" class="fixed inset-0 bg-stone-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-3 sm:p-6 hidden">
+        <div class="card-kawaii bg-white max-w-2xl w-full max-h-[85vh] flex flex-col p-5 sm:p-6">
+            <div class="flex items-center justify-between border-b-2 border-stone-800 pb-3 mb-3">
+                <div class="flex items-center gap-2">
+                    <span class="text-2xl">📕</span>
+                    <h3 class="text-lg font-black text-stone-900">弱點複習單字本</h3>
+                    <span id="notebookCountTag" class="px-2 py-0.5 bg-rose-500 text-white rounded-full text-xs font-extrabold">0 詞</span>
+                </div>
+                <button id="btnCloseNotebook" class="btn-kawaii bg-stone-100 hover:bg-stone-200 px-3 py-1 text-xs font-black">
+                    關閉 ✕
+                </button>
+            </div>
+
+            <div class="flex items-center justify-between gap-2 mb-3">
+                <p class="text-xs font-bold text-stone-500">本回合中答錯、超時或手動標註的生詞，可重新抽取 8 題特訓！</p>
+                <div class="flex gap-2">
+                    <button id="btnDrillWeakness" class="btn-kawaii bg-rose-400 hover:bg-rose-500 text-stone-900 px-3 py-1.5 text-xs font-black">
+                        ⚡ 弱點二刷 (抽8題)
+                    </button>
+                    <button id="btnExportWeakness" class="btn-kawaii bg-amber-200 hover:bg-amber-300 text-stone-900 px-3 py-1.5 text-xs font-black">
+                        📋 複製清單
+                    </button>
+                </div>
+            </div>
+
+            <div id="weaknessListContainer" class="flex-1 overflow-y-auto space-y-2 pr-1 text-xs sm:text-sm">
+                <!-- Populated dynamically -->
+            </div>
+        </div>
+    </div>
+
+    <!-- Settings Modal -->
+    <div id="modalSettings" class="fixed inset-0 bg-stone-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-3 sm:p-6 hidden">
+        <div class="card-kawaii bg-white max-w-md w-full p-5 sm:p-6 flex flex-col gap-4">
+            <div class="flex items-center justify-between border-b-2 border-stone-800 pb-2">
+                <h3 class="text-base font-black text-stone-900 flex items-center gap-2">
+                    <span>⚙️</span> 遊戲訓練設定
+                </h3>
+                <button id="btnCloseSettings" class="btn-kawaii bg-stone-100 px-2.5 py-1 text-xs font-black">✕</button>
+            </div>
+
+            <div class="space-y-4 text-xs sm:text-sm font-bold text-stone-700">
+                <div>
+                    <label class="block text-stone-900 font-black mb-1.5">⏱️ 倒數秒數難度：</label>
+                    <div class="grid grid-cols-3 gap-2">
+                        <button class="btn-timer-opt btn-kawaii py-2 text-center" data-sec="5">5 秒 (極速)</button>
+                        <button class="btn-timer-opt btn-kawaii py-2 text-center" data-sec="8">8 秒 (標準)</button>
+                        <button class="btn-timer-opt btn-kawaii py-2 text-center bg-amber-400" data-sec="10">10 秒 (推薦)</button>
+                    </div>
+                </div>
+
+                <div class="flex items-center justify-between pt-2 border-t border-stone-200">
+                    <span>🔊 出題自動朗讀日語：</span>
+                    <input id="toggleAutoTTS" type="checkbox" checked class="w-5 h-5 accent-amber-500 rounded border-2 border-stone-800 cursor-pointer">
+                </div>
+
+                <div class="flex items-center justify-between pt-2 border-t border-stone-200">
+                    <span>🎵 音效與緊張倒數聲：</span>
+                    <input id="toggleSFX" type="checkbox" checked class="w-5 h-5 accent-amber-500 rounded border-2 border-stone-800 cursor-pointer">
+                </div>
+            </div>
+
+            <button id="btnSaveSettings" class="btn-kawaii bg-amber-400 hover:bg-amber-500 text-stone-900 font-black py-2.5 text-xs sm:text-sm mt-2">
+                保存並繼續
+            </button>
+        </div>
+    </div>
+
+    <!-- Toast Notification Overlay -->
+    <div id="toast" class="fixed bottom-6 left-1/2 -translate-x-1/2 card-kawaii bg-stone-900 text-white px-5 py-2.5 font-bold text-xs sm:text-sm opacity-0 pointer-events-none transition-all duration-200 z-50 flex items-center gap-2">
+        <span id="toastIcon">✨</span>
+        <span id="toastMsg">通知文字</span>
+    </div>
+
+    <script>
+        const VOCAB_DATABASE = [
+            // 漢字讀音與訓讀動詞
+            { kanji: "唆す", reading: "そそのかす", romaji: "sosonokasu", meaning: "教唆/挑唆他人做壞事", traps: "促す(うながす)、脅かす(おびやかす)", example: "悪友に唆されて犯行に及んだ。", exZh: "受到壞朋友的教唆才犯下罪行。", category: "訓讀動詞" },
+            { kanji: "賄う", reading: "まかなう", romaji: "makanau", meaning: "籌措生活費/供給飲食", traps: "養う(やしなう)、償う(つぐなう)", example: "生活費をアルバイトで賄った。", exZh: "生活費全靠打工來籌措供給。", category: "訓讀動詞" },
+            { kanji: "怠る", reading: "おこたる", romaji: "okotaru", meaning: "怠慢/鬆懈職守/疏忽", traps: "滞る(とどこおる:拖延停滯)", example: "日々の地道な確認を怠った。", exZh: "疏忽懈怠了每天踏實的檢查作業。", category: "訓讀動詞" },
+            { kanji: "歪める", reading: "ゆがめる", romaji: "yugameru", meaning: "使歪斜扭曲/曲解事實", traps: "顰める(ひそめる:眉を顰める皺眉)", example: "苦悶の表情を浮かべて顔を歪めた。", exZh: "因苦悶痛苦而使面容扭曲。", category: "訓讀動詞" },
+            { kanji: "脅かす", reading: "おびやかす", romaji: "obiyakasu", meaning: "威脅地位或和平", traps: "嚇唬人讀 おどかす", example: "国際社会の平和を脅かす懸念事項。", exZh: "威脅國際社會和平的隱憂事項。", category: "訓讀動詞" },
+            { kanji: "築く", reading: "きずく", romaji: "kizuku", meaning: "構築/建立資產關係", traps: "気付く(きづく:察覺)", example: "野生動物は独自の生態系を築いた。", exZh: "野生動物建立了獨特的生態體系。", category: "訓讀動詞" },
+            { kanji: "貫く", reading: "つらぬく", romaji: "tsuranuku", meaning: "穿透/貫徹始終", traps: "躓く(つまずく:跌倒挫折)", example: "自らの信条を頑なに貫いた。", exZh: "頑強固執地貫徹了自己的信念。", category: "訓讀動詞" },
+            { kanji: "疎か", reading: "おろそか", romaji: "orosoka", meaning: "怠慢/敷衍草率/忽視", traps: "わずか(僅か:微小)", example: "安全点検を少しも疎かにしてはならない。", exZh: "絕不能對安全檢查有絲毫懈怠疏忽。", category: "訓讀動詞/形容詞" },
+            { kanji: "生い立ち", reading: "おいたち", romaji: "oitachi", meaning: "成長歷程/身世背景", traps: "誤讀 いきたち", example: "自らの生い立ちについて自伝に書き綴った。", exZh: "在自傳中記錄了自己的成長身世。", category: "名詞讀音" },
+            { kanji: "紛糾", reading: "ふんきゅう", romaji: "funkyuu", meaning: "糾紛混亂/爭執不下", traps: "「紛」是清音 ふん，非 ぶん", example: "新工場の建設計画をめぐる議論が紛糾した。", exZh: "圍繞新工廠計畫的討論陷入紛擾糾紛。", category: "音讀清濁" },
+            { kanji: "包括", reading: "ほうかつ", romaji: "houkatsu", meaning: "囊括/總括包含", traps: "包 是 ほう，非 ぼう", example: "研究成果を包括した総合的な論文。", exZh: "囊括包含多年研究成果的論文。", category: "音讀清濁" },
+            { kanji: "継承", reading: "けいしょう", romaji: "keishou", meaning: "繼承傳統/精神技術", traps: "承 是 しょう，非 じょう", example: "熟練技術の継承が強く求められている。", exZh: "各界強烈要求必須將熟練技術傳承下去。", category: "音讀清濁" },
+
+            // 副詞與極性呼應
+            { kanji: "ろくに〜ない", reading: "ろくに", romaji: "rokuni", meaning: "沒好好地/沒充分地(必接否定)", traps: "誤以為是正面「充分」", example: "ここ数日はろくに睡眠もとれていない。", exZh: "這幾天甚至連覺都沒辦法好好睡。", category: "呼應副詞" },
+            { kanji: "てんで〜ない", reading: "てんで", romaji: "tende", meaning: "根本完全不(全面否定)", traps: "常與 まるで(好像) 混淆", example: "事業計画にはてんで現実味が感じられない。", exZh: "那企劃根本完全感覺不到現實可行性。", category: "呼應副詞" },
+            { kanji: "ざらに", reading: "ざらに", romaji: "zarani", meaning: "極常見/滿街都是/不稀奇", traps: "選成「めったにない罕見」就大錯", example: "転職でキャリアアップする人はざらにいる。", exZh: "透過轉職追求晉升的人滿街都是、極為普遍。", category: "副詞語意" },
+            { kanji: "あべこべ", reading: "あべこべ", romaji: "abekobe", meaning: "顛倒/相反", traps: "選成「曖昧」就錯了", example: "意図とはあべこべに受け取られた。", exZh: "反而被理解成了與原意完全相反的意思。", category: "副詞/名詞" },
+            { kanji: "うかつ", reading: "うかつ", romaji: "ukatsu", meaning: "粗心大意/疏忽輕率", traps: "迂闊；指不注意、疏忽", example: "書類の発送を忘れるとはうかつだった。", exZh: "竟然忘了寄文件，實在太疏忽大意了。", category: "副詞/名詞" },
+            { kanji: "とっさに", reading: "とっさに", romaji: "tossani", meaning: "瞬間條件反射/情急之下", traps: "咄嗟に；非「どうにか設法」", example: "同僚を見ると、とっさに助け舟を出した。", exZh: "看到同事遇困，反射性地立刻伸出援手。", category: "副詞語意" },
+            { kanji: "げっそり", reading: "げっそり", romaji: "gessori", meaning: "面容憔悴消瘦/大受打擊", traps: "ぐっすり(熟睡)、どっさり(大量)", example: "残業がたたり、すっかりげっそり痩せた。", exZh: "因加班過勞，整個人消瘦憔悴了一圈。", category: "擬態詞" },
+            { kanji: "うんざり", reading: "うんざり", romaji: "unzari", meaning: "厭倦/受夠了/反胃", traps: "しんなり(軟化)", example: "後輩の言い訳を聞かされ、うんざりした。", exZh: "聽著後輩的藉口，主管感到徹底厭煩受夠。", category: "擬態詞" },
+            { kanji: "ひたすら", reading: "ひたすら", romaji: "hitasura", meaning: "一味地/心無旁鶩埋頭", traps: "只管；非 おろそか", example: "スマホをひたすらいじり続ける乗客。", exZh: "一味專注猛滑手機的乘客格外醒目。", category: "副詞語意" },
+            { kanji: "育む", reading: "はぐくむ", romaji: "hagukumu", meaning: "細心呵護/悉心培育", traps: "非「刈り取る收割」", example: "春の日差しを浴びて新芽を育んでいる。", exZh: "沐浴在春日暖陽下細心孕育新芽。", category: "訓讀動詞" },
+            { kanji: "かろうじて", reading: "かろうじて", romaji: "karoujite", meaning: "好不容易/勉強艱難達成", traps: "辛うじて；非 わずかに", example: "粘り強い説得の末にかろうじて合意した。", exZh: "在頑強說服下，總算勉強達成了協議。", category: "副詞語意" },
+            { kanji: "畳む", reading: "たたむ", romaji: "tatamu", meaning: "收攤歇業/關閉結束事業", traps: "会社を畳む:清算關閉，非合併", example: "負債を抱えて会社を畳むことにした。", exZh: "背負巨額負債，決定結束並關閉公司。", category: "慣用動詞" },
+
+            // 慣用搭配與語彙用法
+            { kanji: "非の打ち所がない", reading: "ひのうちどころがない", romaji: "hinouchidokoroganai", meaning: "完美無暇/無懈可擊", traps: "非 指缺點；無可指責挑剔", example: "提示した解決策は非の打ち所がない。", exZh: "提出的解決方案極為完美、挑不出一絲毛病。", category: "固定慣用語" },
+            { kanji: "機先を制する", reading: "きせんをせいする", romaji: "kisenwoseisuru", meaning: "搶先一步/先發制人", traps: "先手；先下手為強奪得主導權", example: "競合他社に機先を制することが勝敗を分けた。", exZh: "先發制人搶得先機成為決定勝負的關鍵。", category: "固定慣用語" },
+            { kanji: "そりが合わない", reading: "そりがあわない", romaji: "sorigaawanai", meaning: "性格合不來/性格脾氣相衝", traps: "反りが合わない；與「馬が合う合得來」相反", example: "価値観が異なっており、昔からそりが合わない。", exZh: "價值觀根本不同，打從以前就合不來。", category: "固定慣用語" },
+            { kanji: "頭を抱える", reading: "あたまをかかえる", romaji: "atamawokakaeru", meaning: "抱頭苦惱/束手無策", traps: "首をかしげる(納悶懷疑)", example: "予期せぬトラブル続きで頭を抱えた。", exZh: "接連發生意外事故，讓人抱頭煩惱。", category: "固定慣用語" },
+            { kanji: "そぐわない", reading: "そぐわない", romaji: "soguwanai", meaning: "與場合氛圍不相稱/不和諧", traps: "かない(敵わない/合わない)", example: "ジーンズで行くのは場の雰囲気にそぐわない。", exZh: "穿牛仔褲去與現場高規格氣氛格格不入。", category: "固定搭配" },
+            { kanji: "苛まれる", reading: "さいなまれる", romaji: "sainamareru", meaning: "遭受折磨/受痛苦煎熬", traps: "苛む(さいなむ)的被動；非「育まれ」", example: "長時間の協議で極度の疲労に苛まれた。", exZh: "備受長時間協議帶來的極度疲憊所折磨。", category: "固定搭配" },
+            { kanji: "緻密", reading: "ちみつ", romaji: "chimitsu", meaning: "周密精細/論理嚴謹無瑕", traps: "修飾邏輯架構用 緻密；精密多指儀器", example: "彼の論文は構成が緻密で隙がない。", exZh: "他的論文架構極其嚴密精細，毫無破綻。", category: "語彙辨析" },
+            { kanji: "押し切る", reading: "おしきる", romaji: "oshikiru", meaning: "排除反對阻力/強行貫徹", traps: "押し分ける(擠開人群)", example: "周囲の反対の声を押し切って進出を決定。", exZh: "頂住周遭強烈反對聲浪，強行做出決定。", category: "複合動詞" },
+            { kanji: "食い止める", reading: "くいとめる", romaji: "kuitomeru", meaning: "防堵/遏止惡化災情蔓延", traps: "打斷說話是 遮る(さえぎる)", example: "感染症の爆発的な拡大を食い止めた。", exZh: "成功防堵遏制了傳染病的爆發式擴散。", category: "複合動詞" },
+            { kanji: "手落ち", reading: "ておち", romaji: "teochi", meaning: "辦事疏忽/漏洞失誤", traps: "手から落とす(掉落東西)", example: "書類の手続きに重大な手落ちがあった。", exZh: "文件手續中存在重大疏漏失誤。", category: "複合名詞" },
+            { kanji: "手持ち無沙汰", reading: "てもちぶさた", romaji: "temochibusata", meaning: "無所事事/閒得發慌", traps: "指手頭無事可做百無聊賴", example: "早く着きすぎて、手持ち無沙汰でスマホを見た。", exZh: "提早到了太久，無所事事地看著手機打發時間。", category: "慣用語" }
+        ];
+
+        class KawaiiSoundEngine {
+            constructor() {
+                this.ctx = null;
+                this.enabled = true;
+            }
+
+            init() {
+                if (!this.ctx) {
+                    const AudioContext = window.AudioContext || window.webkitAudioContext;
+                    this.ctx = new AudioContext();
+                }
+                if (this.ctx.state === 'suspended') {
+                    this.ctx.resume();
+                }
+            }
+
+            playCorrect() {
+                if (!this.enabled) return;
+                this.init();
+                const now = this.ctx.currentTime;
+                this.playTone(523.25, 'triangle', now, 0.12, 0.3); // C5
+                this.playTone(659.25, 'triangle', now + 0.1, 0.12, 0.3); // E5
+                this.playTone(783.99, 'triangle', now + 0.2, 0.25, 0.35); // G5
+            }
+
+            playBuzzer() {
+                if (!this.enabled) return;
+                this.init();
+                const now = this.ctx.currentTime;
+                const osc = this.ctx.createOscillator();
+                const gain = this.ctx.createGain();
+                osc.type = 'sawtooth';
+                osc.frequency.setValueAtTime(140, now);
+                osc.frequency.linearRampToValueAtTime(100, now + 0.3);
+                gain.gain.setValueAtTime(0.25, now);
+                gain.gain.linearRampToValueAtTime(0.01, now + 0.3);
+                osc.connect(gain);
+                gain.connect(this.ctx.destination);
+                osc.start(now);
+                osc.stop(now + 0.3);
+            }
+
+            playTick() {
+                if (!this.enabled) return;
+                this.init();
+                const now = this.ctx.currentTime;
+                const osc = this.ctx.createOscillator();
+                const gain = this.ctx.createGain();
+                osc.type = 'sine';
+                osc.frequency.setValueAtTime(800, now);
+                gain.gain.setValueAtTime(0.12, now);
+                gain.gain.exponentialRampToValueAtTime(0.001, now + 0.05);
+                osc.connect(gain);
+                gain.connect(this.ctx.destination);
+                osc.start(now);
+                osc.stop(now + 0.05);
+            }
+
+            playFanfare() {
+                if (!this.enabled) return;
+                this.init();
+                const now = this.ctx.currentTime;
+                const notes = [523.25, 659.25, 783.99, 1046.50];
+                notes.forEach((freq, idx) => {
+                    this.playTone(freq, 'sine', now + idx * 0.12, 0.3, 0.3);
+                });
+            }
+
+            playTone(freq, type, startTime, duration, volume) {
+                const osc = this.ctx.createOscillator();
+                const gain = this.ctx.createGain();
+                osc.type = type;
+                osc.frequency.setValueAtTime(freq, startTime);
+                gain.gain.setValueAtTime(volume, startTime);
+                gain.gain.exponentialRampToValueAtTime(0.001, startTime + duration);
+                osc.connect(gain);
+                gain.connect(this.ctx.destination);
+                osc.start(startTime);
+                osc.stop(startTime + duration);
+            }
+        }
+
+        const AppState = {
+            currentIndex: 0,
+            timerLimit: 10.0, // Updated to 10 seconds default
+            timerRemaining: 10.0,
+            timerInterval: null,
+            isAnswering: false,
+            isListening: false,
+            autoTTS: true,
+            sfxEnabled: true,
+            scoreCorrect: 0,
+            scoreWrong: 0,
+            comboStreak: 0,
+            weaknessSet: new Set(),
+            drillMode: false,
+            activeDeck: []
+        };
+
+        const soundEngine = new KawaiiSoundEngine();
+
+        /* DOM Elements */
+        const elTargetKanji = document.getElementById('targetKanji');
+        const elBtnSpeakWord = document.getElementById('btnSpeakWord');
+        const elBadgeCategory = document.getElementById('badgeCategory');
+        const elTimerDisplay = document.getElementById('timerDisplay');
+        const elTimeProgressBar = document.getElementById('timeProgressBar');
+        const elInputAnswer = document.getElementById('inputAnswer');
+        const elBtnSubmitAnswer = document.getElementById('btnSubmitAnswer');
+        const elBtnMic = document.getElementById('btnMic');
+        const elVoiceStatus = document.getElementById('voiceStatus');
+        const elMascotAvatar = document.getElementById('mascotAvatar');
+        const elSenseiBubble = document.getElementById('senseiBubble');
+        const elHintBox = document.getElementById('hintBox');
+
+        const elStatProgress = document.getElementById('statProgress');
+        const elStatCorrect = document.getElementById('statCorrect');
+        const elStatWrong = document.getElementById('statWrong');
+        const elStatStreak = document.getElementById('statStreak');
+
+        const elExplanationCard = document.getElementById('explanationCard');
+        const elFeedbackResultIcon = document.getElementById('feedbackResultIcon');
+        const elFeedbackTitle = document.getElementById('feedbackTitle');
+        const elFeedbackWordTitle = document.getElementById('feedbackWordTitle');
+        const elExplMeaning = document.getElementById('explMeaning');
+        const elExplRomaji = document.getElementById('explRomaji');
+        const elExplTraps = document.getElementById('explTraps');
+        const elExplSentence = document.getElementById('explSentence');
+        const elExplSentenceZh = document.getElementById('explSentenceZh');
+        const elBtnNextQuestion = document.getElementById('btnNextQuestion');
+        const elBtnPlaySentence = document.getElementById('btnPlaySentence');
+
+        const elBtnManualPass = document.getElementById('btnManualPass');
+        const elBtnManualFail = document.getElementById('btnManualFail');
+
+        const elBtnRestartRound = document.getElementById('btnRestartRound');
+        const elModalNotebook = document.getElementById('modalNotebook');
+        const elBtnNotebookToggle = document.getElementById('btnNotebookToggle');
+        const elBtnCloseNotebook = document.getElementById('btnCloseNotebook');
+        const elWeaknessListContainer = document.getElementById('weaknessListContainer');
+        const elBadgeWeaknessCount = document.getElementById('badgeWeaknessCount');
+        const elNotebookCountTag = document.getElementById('notebookCountTag');
+        const elBtnExportWeakness = document.getElementById('btnExportWeakness');
+        const elBtnDrillWeakness = document.getElementById('btnDrillWeakness');
+
+        const elModalSettings = document.getElementById('modalSettings');
+        const elBtnSettings = document.getElementById('btnSettings');
+        const elBtnCloseSettings = document.getElementById('btnCloseSettings');
+        const elBtnSaveSettings = document.getElementById('btnSaveSettings');
+        const elToggleAutoTTS = document.getElementById('toggleAutoTTS');
+        const elToggleSFX = document.getElementById('toggleSFX');
+
+        const elToast = document.getElementById('toast');
+        const elToastIcon = document.getElementById('toastIcon');
+        const elToastMsg = document.getElementById('toastMsg');
+
+        function speakJapanese(text, onEnd) {
+            if (!('speechSynthesis' in window)) return;
+            window.speechSynthesis.cancel();
+            const utterance = new SpeechSynthesisUtterance(text);
+            utterance.lang = 'ja-JP';
+            utterance.rate = 1.0;
+            utterance.pitch = 1.05;
+
+            const voices = window.speechSynthesis.getVoices();
+            const jaVoice = voices.find(v => v.lang.startsWith('ja') || v.lang === 'ja_JP');
+            if (jaVoice) utterance.voice = jaVoice;
+
+            if (onEnd) utterance.onend = onEnd;
+            window.speechSynthesis.speak(utterance);
+        }
+
+        // Web Speech Recognition
+        let recognition = null;
+        if ('webkitSpeechRecognition' in window || 'SpeechRecognition' in window) {
+            const SpeechRec = window.SpeechRecognition || window.webkitSpeechRecognition;
+            recognition = new SpeechRec();
+            recognition.lang = 'ja-JP';
+            recognition.continuous = false;
+            recognition.interimResults = false;
+
+            recognition.onstart = () => {
+                AppState.isListening = true;
+                elBtnMic.classList.add('mic-active');
+                elVoiceStatus.innerHTML = '<span class="text-rose-600 font-extrabold">🔴 正在聆聽... 請說出讀音或意思！</span>';
+            };
+
+            recognition.onresult = (event) => {
+                const transcript = event.results[0][0].transcript.trim();
+                elInputAnswer.value = transcript;
+                elVoiceStatus.innerHTML = `<span>聽到聲音: 「<b>${transcript}</b>」</span>`;
+                evaluateAnswer(transcript);
+            };
+
+            recognition.onerror = () => {
+                AppState.isListening = false;
+                elBtnMic.classList.remove('mic-active');
+                elVoiceStatus.innerHTML = '<span class="text-stone-400">語音辨識未完成，可點麥克風重試或直接打字</span>';
+            };
+
+            recognition.onend = () => {
+                AppState.isListening = false;
+                elBtnMic.classList.remove('mic-active');
+            };
+        }
+
+        function evaluateAnswer(userText) {
+            if (!AppState.isAnswering) return;
+            const currentItem = AppState.activeDeck[AppState.currentIndex];
+            if (!currentItem) return;
+
+            const text = userText.toLowerCase().replace(/[\s\-_,，。、！!]/g, '');
+            const targetReading = currentItem.reading.toLowerCase().replace(/[\s\-_]/g, '');
+            const targetRomaji = currentItem.romaji.toLowerCase().replace(/[\s\-_]/g, '');
+            const targetKanji = currentItem.kanji.toLowerCase();
+            
+            const meaningKeywords = currentItem.meaning.split(/[\/\s,，、]+/).filter(k => k.length >= 2);
+
+            let isMatch = false;
+
+            if (text.includes(targetReading) || text.includes(targetRomaji)) {
+                isMatch = true;
+            } else if (text === targetKanji) {
+                isMatch = true;
+            } else {
+                for (const kw of meaningKeywords) {
+                    if (text.includes(kw.toLowerCase())) {
+                        isMatch = true;
+                        break;
+                    }
+                }
+            }
+
+            if (isMatch) {
+                concludeQuestion(true, "答對！反射成功！");
+            } else {
+                showToast("⚠️", "尚未匹配，若已在心中正確答出可點擊「我在10秒內想到了」！");
+            }
+        }
+
+        function loadCurrentQuestion() {
+            if (AppState.currentIndex >= AppState.activeDeck.length) {
+                finishSession();
+                return;
+            }
+
+            const item = AppState.activeDeck[AppState.currentIndex];
+            AppState.isAnswering = true;
+            AppState.timerRemaining = AppState.timerLimit;
+
+            // Update UI
+            elTargetKanji.textContent = item.kanji;
+            elBadgeCategory.textContent = item.category || "N1 核心詞彙";
+            elStatProgress.textContent = `${AppState.currentIndex + 1} / ${AppState.activeDeck.length}`;
+            elInputAnswer.value = "";
+            elVoiceStatus.innerHTML = '<span>點擊下方麥克風說話，或直接鍵盤輸入按 Enter</span>';
+            elExplanationCard.classList.add('hidden');
+            elTimerDisplay.textContent = AppState.timerRemaining.toFixed(1);
+            elTimerDisplay.classList.remove('timer-urgent');
+            elTimeProgressBar.style.width = '100%';
+            elTimeProgressBar.className = "h-full bg-emerald-400 transition-all duration-75 w-full";
+            
+            // Mascot mood
+            elMascotAvatar.textContent = "🧐";
+            elSenseiBubble.textContent = "速答！讀音與意思！";
+
+            // Auto TTS
+            if (AppState.autoTTS) {
+                speakJapanese(item.kanji);
+            }
+
+            // Start Ticking Timer
+            clearInterval(AppState.timerInterval);
+            const intervalStep = 100; // ms
+            let tickCount = 0;
+
+            AppState.timerInterval = setInterval(() => {
+                AppState.timerRemaining -= intervalStep / 1000;
+                tickCount++;
+
+                if (AppState.timerRemaining <= 0) {
+                    AppState.timerRemaining = 0;
+                    clearInterval(AppState.timerInterval);
+                    concludeQuestion(false, "⏰ 超時！10 秒思考時間到");
+                }
+
+                elTimerDisplay.textContent = Math.max(0, AppState.timerRemaining).toFixed(1);
+                const percent = (AppState.timerRemaining / AppState.timerLimit) * 100;
+                elTimeProgressBar.style.width = `${percent}%`;
+
+                if (AppState.timerRemaining <= 2.5) {
+                    elTimerDisplay.classList.add('timer-urgent');
+                    elTimeProgressBar.className = "h-full bg-rose-500 transition-all duration-75";
+                    if (tickCount % 4 === 0) {
+                        soundEngine.playTick();
+                    }
+                } else if (AppState.timerRemaining <= 5.0) {
+                    elTimeProgressBar.className = "h-full bg-amber-400 transition-all duration-75";
+                }
+            }, intervalStep);
+
+            setTimeout(() => {
+                elInputAnswer.focus();
+            }, 50);
+        }
+
+        function concludeQuestion(isCorrect, message) {
+            if (!AppState.isAnswering) return;
+            AppState.isAnswering = false;
+            clearInterval(AppState.timerInterval);
+
+            if (recognition && AppState.isListening) {
+                try { recognition.stop(); } catch(e) {}
+            }
+
+            const currentItem = AppState.activeDeck[AppState.currentIndex];
+
+            if (isCorrect) {
+                AppState.scoreCorrect++;
+                AppState.comboStreak++;
+                soundEngine.playCorrect();
+                elMascotAvatar.textContent = "🥳";
+                elSenseiBubble.textContent = "素晴らしい！反射神速！";
+                elFeedbackResultIcon.textContent = "⭕";
+                elFeedbackTitle.textContent = message || "判定合格！反應極快！";
+                elFeedbackTitle.className = "text-base sm:text-lg font-black text-emerald-700";
+
+                if (AppState.comboStreak >= 3 && typeof confetti === 'function') {
+                    confetti({
+                        particleCount: 25,
+                        spread: 60,
+                        origin: { y: 0.7 }
+                    });
+                }
+            } else {
+                AppState.scoreWrong++;
+                AppState.comboStreak = 0;
+                soundEngine.playBuzzer();
+                elMascotAvatar.textContent = "😱";
+                elSenseiBubble.textContent = "まだまだ！趕緊記下來！";
+                elFeedbackResultIcon.textContent = "❌";
+                elFeedbackTitle.textContent = message || "未在限時內回答 / 不合格";
+                elFeedbackTitle.className = "text-base sm:text-lg font-black text-rose-600";
+
+                AppState.weaknessSet.add(currentItem);
+                updateWeaknessBadge();
+            }
+
+            elStatCorrect.textContent = AppState.scoreCorrect;
+            elStatWrong.textContent = AppState.scoreWrong;
+            elStatStreak.textContent = AppState.comboStreak;
+
+            elFeedbackWordTitle.textContent = `${currentItem.kanji}（${currentItem.reading}）`;
+            elExplMeaning.textContent = `${currentItem.reading} ｜ ${currentItem.meaning}`;
+            elExplRomaji.textContent = `發音: ${currentItem.romaji}`;
+            elExplTraps.textContent = currentItem.traps || "無特殊混淆詞";
+            elExplSentence.textContent = currentItem.example;
+            elExplSentenceZh.textContent = currentItem.exZh;
+
+            elExplanationCard.classList.remove('hidden');
+            elExplanationCard.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+        }
+
+        function updateWeaknessBadge() {
+            const count = AppState.weaknessSet.size;
+            elBadgeWeaknessCount.textContent = count;
+            elNotebookCountTag.textContent = `${count} 詞`;
+        }
+
+        function finishSession() {
+            soundEngine.playFanfare();
+            if (typeof confetti === 'function') {
+                confetti({ particleCount: 100, spread: 80, origin: { y: 0.6 } });
+            }
+            elTargetKanji.textContent = "🎉 測驗完成！";
+            elBadgeCategory.textContent = "結算";
+            elHintBox.textContent = `恭喜完成本輪 8 題特訓！答對：${AppState.scoreCorrect} 題，答錯：${AppState.scoreWrong} 題。可開啟弱點本二刷或展開新一輪！`;
+            elTimerDisplay.textContent = "0.0";
+            elTimeProgressBar.style.width = '0%';
+            elMascotAvatar.textContent = "🏆";
+            elSenseiBubble.textContent = "お疲れ様でした！";
+            elExplanationCard.classList.add('hidden');
+            showToast("🏆", "8 題挑戰完成！點擊頂部按鈕可開新一輪");
+        }
+
+        function showToast(icon, msg) {
+            elToastIcon.textContent = icon;
+            elToastMsg.textContent = msg;
+            elToast.classList.remove('opacity-0', 'pointer-events-none');
+            setTimeout(() => {
+                elToast.classList.add('opacity-0', 'pointer-events-none');
+            }, 2200);
+        }
+
+        function renderWeaknessList() {
+            elWeaknessListContainer.innerHTML = '';
+            if (AppState.weaknessSet.size === 0) {
+                elWeaknessListContainer.innerHTML = `
+                    <div class="text-center py-10 text-stone-400 font-bold">
+                        <div class="text-4xl mb-2">🌸</div>
+                        目前尚無錯題！答題過程中有超時或答錯會自動記錄於此。
+                    </div>
+                `;
+                return;
+            }
+
+            Array.from(AppState.weaknessSet).forEach((item) => {
+                const row = document.createElement('div');
+                row.className = "p-3 bg-amber-50/70 border-2 border-stone-800 rounded-2xl flex items-center justify-between gap-3 shadow-[2px_2px_0px_#292524]";
+                row.innerHTML = `
+                    <div class="flex-1">
+                        <div class="flex items-center gap-2">
+                            <span class="text-base font-black text-stone-900">${item.kanji}</span>
+                            <span class="text-xs font-extrabold text-amber-800 bg-amber-200 px-2 py-0.5 rounded-full">${item.reading}</span>
+                            <span class="text-xs text-stone-500 font-medium">(${item.category})</span>
+                        </div>
+                        <div class="text-xs font-bold text-stone-700 mt-1">${item.meaning}</div>
+                        <div class="text-xs text-stone-500 mt-0.5">例句：${item.example}</div>
+                    </div>
+                    <button class="btn-kawaii bg-white hover:bg-amber-100 p-2 text-sm rounded-xl speak-item-btn flex-shrink-0" title="朗讀">
+                        🔊
+                    </button>
+                `;
+                row.querySelector('.speak-item-btn').addEventListener('click', () => {
+                    speakJapanese(`${item.kanji}。${item.example}`);
+                });
+                elWeaknessListContainer.appendChild(row);
+            });
+        }
+
+        function shuffleArray(array) {
+            const arr = [...array];
+            for (let i = arr.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [arr[i], arr[j]] = [arr[j], arr[i]];
+            }
+            return arr;
+        }
+
+        function startNewRound(customQuestions = null) {
+            if (customQuestions && customQuestions.length > 0) {
+                // Pick up to 8 random questions from weakness set
+                AppState.activeDeck = shuffleArray(customQuestions).slice(0, 8);
+                AppState.drillMode = true;
+            } else {
+                // Pick exactly 8 random questions from main database
+                AppState.activeDeck = shuffleArray(VOCAB_DATABASE).slice(0, 8);
+                AppState.drillMode = false;
+            }
+
+            AppState.currentIndex = 0;
+            AppState.scoreCorrect = 0;
+            AppState.scoreWrong = 0;
+            AppState.comboStreak = 0;
+            elStatCorrect.textContent = "0";
+            elStatWrong.textContent = "0";
+            elStatStreak.textContent = "0";
+
+            loadCurrentQuestion();
+        }
+
+        // Restart button in header
+        elBtnRestartRound.addEventListener('click', () => {
+            startNewRound();
+            showToast("🔄", "已重新抽取隨機 8 題！");
+        });
+
+        elBtnSpeakWord.addEventListener('click', () => {
+            const currentItem = AppState.activeDeck[AppState.currentIndex];
+            if (currentItem) speakJapanese(currentItem.kanji);
+        });
+
+        elBtnPlaySentence.addEventListener('click', () => {
+            const currentItem = AppState.activeDeck[AppState.currentIndex];
+            if (currentItem) speakJapanese(currentItem.example);
+        });
+
+        elBtnSubmitAnswer.addEventListener('click', () => {
+            if (elInputAnswer.value.trim()) {
+                evaluateAnswer(elInputAnswer.value.trim());
+            }
+        });
+
+        elInputAnswer.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                if (elInputAnswer.value.trim()) {
+                    evaluateAnswer(elInputAnswer.value.trim());
+                }
+            }
+        });
+
+        elBtnNextQuestion.addEventListener('click', () => {
+            AppState.currentIndex++;
+            loadCurrentQuestion();
+        });
+
+        window.addEventListener('keydown', (e) => {
+            if (e.code === 'Space' && !elExplanationCard.classList.contains('hidden') && document.activeElement !== elInputAnswer) {
+                e.preventDefault();
+                AppState.currentIndex++;
+                loadCurrentQuestion();
+            }
+        });
+
+        // Manual Pass / Fail Buttons (Updated to 10 seconds label)
+        elBtnManualPass.addEventListener('click', () => {
+            concludeQuestion(true, "手動認定：10 秒內已順利反射！");
+        });
+
+        elBtnManualFail.addEventListener('click', () => {
+            concludeQuestion(false, "手動標記：沒想起來 / 加入弱點本");
+        });
+
+        elBtnMic.addEventListener('click', () => {
+            soundEngine.init();
+            if (!recognition) {
+                showToast("⚠️", "此瀏覽器尚未支援語音辨識，請使用打字或口說自評");
+                return;
+            }
+            if (AppState.isListening) {
+                recognition.stop();
+            } else {
+                try {
+                    recognition.start();
+                } catch(e) {
+                    showToast("⚠️", "請允許瀏覽器麥克風權限");
+                }
+            }
+        });
+
+        elBtnNotebookToggle.addEventListener('click', () => {
+            renderWeaknessList();
+            elModalNotebook.classList.remove('hidden');
+        });
+
+        elBtnCloseNotebook.addEventListener('click', () => {
+            elModalNotebook.classList.add('hidden');
+        });
+
+        elBtnExportWeakness.addEventListener('click', () => {
+            if (AppState.weaknessSet.size === 0) {
+                showToast("⚠️", "目前沒有錯題可複製！");
+                return;
+            }
+            let text = "【JLPT N1 弱點特訓單字清單】\n";
+            Array.from(AppState.weaknessSet).forEach((item, idx) => {
+                text += `${idx + 1}. 【${item.kanji}】(${item.reading}) - ${item.meaning} [例] ${item.example}\n`;
+            });
+            
+            const textarea = document.createElement('textarea');
+            textarea.value = text;
+            document.body.appendChild(textarea);
+            textarea.select();
+            document.execCommand('copy');
+            document.body.removeChild(textarea);
+            showToast("📋", "已複製弱點清單至剪貼簿！");
+        });
+
+        elBtnDrillWeakness.addEventListener('click', () => {
+            if (AppState.weaknessSet.size === 0) {
+                showToast("⚠️", "目前沒有弱點生詞！");
+                return;
+            }
+            elModalNotebook.classList.add('hidden');
+            startNewRound(Array.from(AppState.weaknessSet));
+            showToast("⚡", "開啟弱點二刷特訓模式 (隨機抽8題)！");
+        });
+
+        elBtnSettings.addEventListener('click', () => {
+            elModalSettings.classList.remove('hidden');
+            document.querySelectorAll('.btn-timer-opt').forEach(btn => {
+                if (parseFloat(btn.dataset.sec) === AppState.timerLimit) {
+                    btn.classList.add('bg-amber-400');
+                } else {
+                    btn.classList.remove('bg-amber-400');
+                }
+            });
+            elToggleAutoTTS.checked = AppState.autoTTS;
+            elToggleSFX.checked = soundEngine.enabled;
+        });
+
+        elBtnCloseSettings.addEventListener('click', () => {
+            elModalSettings.classList.add('hidden');
+        });
+
+        document.querySelectorAll('.btn-timer-opt').forEach(btn => {
+            btn.addEventListener('click', () => {
+                document.querySelectorAll('.btn-timer-opt').forEach(b => b.classList.remove('bg-amber-400'));
+                btn.classList.add('bg-amber-400');
+                AppState.timerLimit = parseFloat(btn.dataset.sec);
+            });
+        });
+
+        elBtnSaveSettings.addEventListener('click', () => {
+            AppState.autoTTS = elToggleAutoTTS.checked;
+            soundEngine.enabled = elToggleSFX.checked;
+            elModalSettings.classList.add('hidden');
+            showToast("⚙️", "設定已保存！");
+        });
+
+        window.onload = () => {
+            startNewRound();
+
+            if ('speechSynthesis' in window) {
+                window.speechSynthesis.getVoices();
+            }
+        };
+    </script>
+</body>
+</html>
