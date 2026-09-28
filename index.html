@@ -476,7 +476,7 @@
 
         const AppState = {
             currentIndex: 0,
-            timerLimit: 10.0, // Updated to 10 seconds default
+            timerLimit: 10.0,
             timerRemaining: 10.0,
             timerInterval: null,
             isAnswering: false,
@@ -548,17 +548,52 @@
         const elToastIcon = document.getElementById('toastIcon');
         const elToastMsg = document.getElementById('toastMsg');
 
+        // 快取語音清單，以利 iOS Safari 即時選取女聲
+        let cachedVoices = [];
+        function refreshVoices() {
+            if ('speechSynthesis' in window) {
+                cachedVoices = window.speechSynthesis.getVoices();
+            }
+        }
+        if ('speechSynthesis' in window) {
+            refreshVoices();
+            window.speechSynthesis.onvoiceschanged = refreshVoices;
+        }
+
+        // 修改後的日語朗讀函數：優先鎖定 Kyoko、Ayumi、Haruka 等女聲，徹底排除 Otoya 男聲
         function speakJapanese(text, onEnd) {
             if (!('speechSynthesis' in window)) return;
             window.speechSynthesis.cancel();
+            
             const utterance = new SpeechSynthesisUtterance(text);
             utterance.lang = 'ja-JP';
             utterance.rate = 1.0;
-            utterance.pitch = 1.05;
+            utterance.pitch = 1.08;
 
-            const voices = window.speechSynthesis.getVoices();
-            const jaVoice = voices.find(v => v.lang.startsWith('ja') || v.lang === 'ja_JP');
-            if (jaVoice) utterance.voice = jaVoice;
+            const voices = cachedVoices.length > 0 ? cachedVoices : window.speechSynthesis.getVoices();
+            const jaVoices = voices.filter(v => v.lang.replace('_', '-') === 'ja-JP' || v.lang.startsWith('ja'));
+
+            if (jaVoices.length > 0) {
+                // 1. 優先選取主流高品質女聲 (iOS: Kyoko, Windows: Ayumi / Haruka, Android/Chrome: Google 日本語)
+                const femaleVoice = jaVoices.find(v => 
+                    v.name.includes('Kyoko') || 
+                    v.name.includes('Ayumi') || 
+                    v.name.includes('Haruka') || 
+                    v.name.includes('Google 日本語') ||
+                    /female/i.test(v.name)
+                );
+
+                // 2. 備選方案：挑選任何日文聲音，但明確排除 Otoya (男聲)
+                const nonOtoyaVoice = jaVoices.find(v => !v.name.includes('Otoya'));
+
+                if (femaleVoice) {
+                    utterance.voice = femaleVoice;
+                } else if (nonOtoyaVoice) {
+                    utterance.voice = nonOtoyaVoice;
+                } else {
+                    utterance.voice = jaVoices[0];
+                }
+            }
 
             if (onEnd) utterance.onend = onEnd;
             window.speechSynthesis.speak(utterance);
@@ -833,11 +868,9 @@
 
         function startNewRound(customQuestions = null) {
             if (customQuestions && customQuestions.length > 0) {
-                // Pick up to 8 random questions from weakness set
                 AppState.activeDeck = shuffleArray(customQuestions).slice(0, 8);
                 AppState.drillMode = true;
             } else {
-                // Pick exactly 8 random questions from main database
                 AppState.activeDeck = shuffleArray(VOCAB_DATABASE).slice(0, 8);
                 AppState.drillMode = false;
             }
@@ -897,7 +930,7 @@
             }
         });
 
-        // Manual Pass / Fail Buttons (Updated to 10 seconds label)
+        // Manual Pass / Fail Buttons
         elBtnManualPass.addEventListener('click', () => {
             concludeQuestion(true, "手動認定：10 秒內已順利反射！");
         });
@@ -994,11 +1027,8 @@
         });
 
         window.onload = () => {
+            refreshVoices();
             startNewRound();
-
-            if ('speechSynthesis' in window) {
-                window.speechSynthesis.getVoices();
-            }
         };
     </script>
 </body>
